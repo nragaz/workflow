@@ -105,10 +105,12 @@ module Workflow
       @workflow_spec = Specification.new(Hash.new, &specification)
       @workflow_spec.states.values.each do |state|
         state_name = state.name
+        column_name = workflow_column
         module_eval do
           define_method "#{state_name}?" do
             state_name == current_state.name
           end
+          scope (state_name.to_s+"_state").to_sym, where(column_name => state_name.to_s)
         end
 
         state.events.values.each do |event|
@@ -280,6 +282,7 @@ module Workflow
     if Object.const_defined?(:ActiveRecord)
       if klass < ActiveRecord::Base
       klass.send :include, ActiveRecordInstanceMethods
+      klass.attr_protected :workflow_state
       klass.before_validation :write_initial_state
       end
     end
