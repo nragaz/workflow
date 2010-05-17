@@ -14,9 +14,9 @@ module Workflow
 
     private
 
-    def state(name, meta = {:meta => {}}, &events_and_etc)
+    def state(name, meta = {}, &events_and_etc)
       # meta[:meta] to keep the API consistent..., gah
-      new_state = State.new(name, meta[:meta])
+      new_state = State.new(name, meta)
       @initial_state = new_state if @states.empty?
       @states[name.to_sym] = new_state
       @scoped_state = new_state
@@ -68,6 +68,10 @@ module Workflow
 
     def initialize(name, meta = {})
       @name, @events, @meta = name, Hash.new, meta
+    end
+    
+    def to_human_s
+      meta[:humanize] || "#{name}".gsub("_", " ")
     end
 
     def to_s
@@ -263,6 +267,14 @@ module Workflow
     def persist_workflow_state(new_value)
       update_attribute self.class.workflow_column, new_value
     end
+    
+    def event
+      @event || @cached_event || nil
+    end
+    
+    def event=(event_name)
+      @cached_event = event_name
+    end
 
     private
 
@@ -272,7 +284,20 @@ module Workflow
     # state. That's why it is important to save the string with the name of the
     # initial state in all the new records.
     def write_initial_state
-      write_attribute self.class.workflow_column, current_state.to_s
+      write_attribute self.class.workflow_column, current_state.to_s unless send(:"#{self.class.workflow_column}?")
+    end
+    
+    def process_cached_event
+      if defined?(@cached_event) && @cached_event
+        @event = @cached_event.dup
+        @cached_event = nil
+        begin
+          process_event! @event
+        rescue Workflow::TransitionHalted => e
+          self.errors[:event] << e.halted_because
+          raise e
+        end
+      end
     end
   end
 
@@ -281,9 +306,10 @@ module Workflow
     klass.extend WorkflowClassMethods
     if Object.const_defined?(:ActiveRecord)
       if klass < ActiveRecord::Base
-      klass.send :include, ActiveRecordInstanceMethods
-      klass.attr_protected :workflow_state
-      klass.before_validation :write_initial_state
+        klass.send :include, ActiveRecordInstanceMethods
+        klass.attr_protected :workflow_state
+        klass.before_validation :write_initial_state
+        klass.after_save :process_cached_event
       end
     end
   end
