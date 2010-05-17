@@ -1,3 +1,11 @@
+This fork does a couple of things:
+
+- Add _state scopes for each defined state (e.g. "active_state" will find all with state == 'active')
+- Add "event=" and "event" methods for ActiveRecord objects, with an after_save hook to run the new event. If it fails, an error is added to errors[:event] with the halt! error message. This does mean manually rescuing the exception in controllers.
+
+-----------------
+
+
 What is workflow?
 -----------------
 
