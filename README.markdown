@@ -85,7 +85,7 @@ transition to other states.
 Installation
 ------------
 
-    gem install workflow
+    gem install nragaz-workflow
 
 Alternatively you can just download the lib/workflow.rb and put it in
 the lib folder of your Rails or Ruby application.
@@ -99,7 +99,7 @@ all the example code from this README in irb.
 
     $ irb
     require 'rubygems'
-    require 'workflow'
+    require 'nragaz-workflow'
 
 Now just copy and paste the source code from the beginning of this README
 file snippet by snippet and observe the output.

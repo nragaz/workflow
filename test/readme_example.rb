@@ -1,4 +1,4 @@
-require 'workflow'
+
 class Article
   include Workflow
   workflow do

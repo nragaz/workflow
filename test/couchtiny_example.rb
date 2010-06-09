@@ -1,10 +1,10 @@
 require File.join(File.dirname(__FILE__), 'test_helper')
 require 'couchtiny'
 require 'couchtiny/document'
-require 'workflow'
 
 class User < CouchTiny::Document
   include Workflow
+  
   workflow do
     state :submitted do
       event :activate_via_link, :transitions_to => :proved_email
@@ -23,7 +23,7 @@ class User < CouchTiny::Document
 end
 
 
-class CouchtinyExample < Test::Unit::TestCase
+class CouchtinyExample < ActiveSupport::TestCase
 
   def setup
     db = CouchTiny::Database.url("http://127.0.0.1:5984/test-workflow")

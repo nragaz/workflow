@@ -1,16 +1,39 @@
 require File.join(File.dirname(__FILE__), 'test_helper')
 
 $VERBOSE = false
-require 'active_record'
-require 'sqlite3'
-require 'workflow'
+
 require 'mocha'
 #require 'ruby-debug'
 
 ActiveRecord::Migration.verbose = false
 
+ActiveRecord::Base.establish_connection(
+  :adapter => "sqlite3",
+  :database  => ":memory:"
+)
+
+ActiveRecord::Schema.define do
+  create_table :orders do |t|
+    t.string :title, :null => false
+    t.string :workflow_state
+  end
+end
+
+ActiveRecord::Base.connection.execute "INSERT INTO orders(title, workflow_state) VALUES('some order', 'accepted')"
+
+ActiveRecord::Schema.define do
+  create_table :legacy_orders do |t|
+    t.string :title, :null => false
+    t.string :foo_bar
+  end
+end
+
+ActiveRecord::Base.connection.execute "INSERT INTO legacy_orders(title, foo_bar) VALUES('some order', 'accepted')"
+
+
 class Order < ActiveRecord::Base
   include Workflow
+  
   workflow do
     state :submitted do
       event :accept, :transitions_to => :accepted, :meta => {:doc_weight => 8} do |reviewer, args|
@@ -43,41 +66,10 @@ class LegacyOrder < ActiveRecord::Base
 end
 
 
-class MainTest < Test::Unit::TestCase
+class MainTest < ActiveSupport::TestCase
 
   def exec(sql)
     ActiveRecord::Base.connection.execute sql
-  end
-
-  def setup
-    ActiveRecord::Base.establish_connection(
-      :adapter => "sqlite3",
-      :database  => ":memory:" #"tmp/test"
-    )
-    ActiveRecord::Base.connection.reconnect! # eliminate ActiveRecord warning. TODO: delete as soon as ActiveRecord is fixed
-
-    ActiveRecord::Schema.define do
-      create_table :orders do |t|
-        t.string :title, :null => false
-        t.string :workflow_state
-      end
-    end
-
-    exec "INSERT INTO orders(title, workflow_state) VALUES('some order', 'accepted')"
-
-    ActiveRecord::Schema.define do
-      create_table :legacy_orders do |t|
-        t.string :title, :null => false
-        t.string :foo_bar
-      end
-    end
-
-    exec "INSERT INTO legacy_orders(title, foo_bar) VALUES('some order', 'accepted')"
-
-  end
-
-  def teardown
-    ActiveRecord::Base.connection.disconnect!
   end
 
   def assert_state(title, expected_state, klass = Order)

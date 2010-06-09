@@ -1,44 +1,41 @@
-require 'rubygems'
-require 'rake/gempackagetask'
+require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
-task :default => [:test]
+desc 'Default: run unit tests.'
+task :default => :test
 
-Rake::TestTask.new do |t|
+desc 'Run unit tests'
+Rake::TestTask.new(:test) do |t|
+  t.libs << 'lib'
+  t.libs << 'test'
+  t.pattern = 'test/**/*_test.rb'
   t.verbose = true
-  t.warning = true
-  t.pattern = 'test/*_test.rb'
 end
 
-PKG_VERSION = "0.3.0"
-PKG_FILES = FileList[
-  'MIT-LICENSE',
-  'README.rdoc',
-  'Rakefile',
-  'lib/**/*.rb',
-  'test/**/test_*.rb'
-]
-
-spec = Gem::Specification.new do |s|
-  s.name = "workflow"
-  s.version = PKG_VERSION
-  s.author = "Vladimir Dobriakov"
-  s.email = "vladimir@geekq.net"
-  s.homepage = "http://blog.geekQ.net/"
-  s.platform = Gem::Platform::RUBY
-  s.summary = "A replacement for acts_as_state_machine."
-  s.files = PKG_FILES.to_a
-  s.require_path = "lib"
+desc 'Generate documentation'
+Rake::RDocTask.new(:rdoc) do |rdoc|
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title    = 'nragaz-workflow'
+  rdoc.options << '--line-numbers' << '--inline-source'
+  rdoc.rdoc_files.include('README')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-Rake::RDocTask.new do |rdoc|
-  rdoc.main = "README"
-  rdoc.rdoc_files.include("README.rdoc", "lib/**/*.rb")
-  rdoc.options << "-S"
-end
-
-package_task = Rake::GemPackageTask.new(spec) do |pkg|
-  pkg.need_zip = true
-  pkg.need_tar_gz = true
+namespace :gem do
+  desc 'Build gem'
+  task :build => :cleanup do
+    system "gem build nragaz-workflow.gemspec"
+  end
+  
+  desc 'Build and install gem'
+  task :install => :build do
+    require 'lib/workflow/version'
+    system "gem install nragaz-workflow-#{Workflow::VERSION}.gem"
+  end
+  
+  desc 'Remove built gem(s)'
+  task :cleanup do
+    system 'rm nragaz-workflow-*.gem'
+  end
 end
