@@ -1,6 +1,4 @@
-tmp
-nbproject
-pkg
-doc/
-html/
-*.swp
+.DS_Store
+tmp/**/*
+doc/**/*
+*.gem
