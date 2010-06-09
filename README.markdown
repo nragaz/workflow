@@ -206,8 +206,12 @@ Custom workflow state persistence
 If you do not use a relational database and ActiveRecord, you can still
 integrate the workflow very easily. To implement persistence you just
 need to override `load_workflow_state` and
-`persist_workflow_state(new_value)` methods. Lets see an example for
+`persist_workflow_state(new_value)` methods. Next section contains an example for
 using CouchDB, a document oriented database.
+
+[Tim Lossen](http://tim.lossen.de/) implemented support 
+for [remodel](http://github.com/tlossen/remodel) / [redis](http://github.com/antirez/redis) 
+key-value store.
 
 Integration with CouchDB
 ------------------------
@@ -252,6 +256,9 @@ the whole class or for the current object. Examples:
     article2.current_state.events[:reject].transitions_to # => :rejected
 
     Article.workflow_spec.states.keys
+    #=> [:rejected, :awaiting_review, :being_reviewed, :accepted, :new]
+
+    Article.workflow_spec.state_names
     #=> [:rejected, :awaiting_review, :being_reviewed, :accepted, :new]
 
     # list all events for all states

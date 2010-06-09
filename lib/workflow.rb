@@ -10,6 +10,10 @@ module Workflow
       instance_eval(&specification)
     end
 
+    def state_names
+      states.keys
+    end
+
     private
 
     def state(name, meta = {}, &events_and_etc)
@@ -93,7 +97,7 @@ module Workflow
 
   module WorkflowClassMethods
     attr_reader :workflow_spec
-    
+
     def workflow_column(column_name=nil)
       if column_name
         @workflow_state_column_name = column_name.to_sym
@@ -299,6 +303,16 @@ module Workflow
     end
   end
 
+  module RemodelInstanceMethods
+    def load_workflow_state
+      send(self.class.workflow_column)
+    end
+
+    def persist_workflow_state(new_value)
+      update(self.class.workflow_column => new_value)
+    end
+  end
+
   def self.included(klass)
     klass.send :include, WorkflowInstanceMethods
     klass.extend WorkflowClassMethods
@@ -308,6 +322,10 @@ module Workflow
         klass.attr_protected :workflow_state
         klass.before_validation :write_initial_state
         klass.after_save :process_cached_event
+      end
+    elsif Object.const_defined?(:Remodel)
+      if klass < Remodel::Entity
+        klass.send :include, RemodelInstanceMethods
       end
     end
   end
