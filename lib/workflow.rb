@@ -1,5 +1,3 @@
-require 'rubygems'
-
 module Workflow
 
   class Specification
